@@ -83,6 +83,7 @@ char spectre_v2(char *addr_to_read) {
 
     /// Time the reads
     measure_cache(probe, hits);
+
     int read = valid_read(hits, 256);
     if (read != -1) {
       return (char)read;

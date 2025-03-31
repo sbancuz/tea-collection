@@ -52,4 +52,6 @@ static inline int valid_read(size_t *hits, size_t len) {
   return -1;
 }
 
+#define poors_man_mfence() for (volatile int z = 0; z < 100; z++)
+
 #endif // CACHE__
