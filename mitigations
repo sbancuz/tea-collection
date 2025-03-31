@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Ensure script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
+    exit 1
+fi
+
+# Check if an argument is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 on|off"
+    exit 1
+fi
+
+TOGGLE=$1
+
+# Validate argument
+if [ "$TOGGLE" != "on" ] && [ "$TOGGLE" != "off" ]; then
+    echo "Usage: $0 on|off"
+    exit 1
+fi
+
+# Define mitigation parameters
+OFF="mitigations=off spectre_v2=off spectre_v2_user=off spectre_v2_user_none=1 spectre_v2_user_strict=0 l1tf=off mds=off tsx_async_abort=off ssbd=force-off pti=off kpti=0"
+ON="mitigations=on spectre_v2=on spectre_v2_user=on spectre_v2_user_none=0 spectre_v2_user_strict=1 l1tf=on mds=on tsx_async_abort=on pti=on kpti=1"
+
+# Detect GRUB configuration file
+GRUB_CONFIG="/etc/default/grub"
+
+if [ ! -f "$GRUB_CONFIG" ]; then
+    echo "Error: GRUB configuration file not found!"
+    exit 1
+fi
+
+# Backup GRUB config
+cp "$GRUB_CONFIG" "$GRUB_CONFIG.bak"
+
+# Apply mitigation setting
+if [ "$TOGGLE" = "on" ]; then
+    echo "Enabling Spectre/Meltdown/TEE mitigations..."
+    sed -i "s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$ON\"/" "$GRUB_CONFIG"
+else
+    echo "Disabling Spectre/Meltdown/TEE mitigations..."
+    sed -i "s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OFF\"/" "$GRUB_CONFIG"
+fi
+
+# Update GRUB and reboot
+update-grub
+
+echo "Kernel mitigations updated. Rebooting now..."
+sleep 3
+reboot
+
