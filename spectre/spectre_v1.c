@@ -1,3 +1,6 @@
+/// Credits to:
+/// https://github.com/crozone/SpectrePoC/blob/master/spectre.c
+
 #include <emmintrin.h>
 #include <stddef.h>
 #include <stdio.h>

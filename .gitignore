@@ -1,4 +1,12 @@
 /out/
 /3rdparty/
+/utils/.cache/
+/utils/*.cmd
+/utils/*.o
+/utils/*.ko
+/utils/*.symvers
+/utils/*.json
+/utils/*.mod
+/utils/*.order
 
 .gdb_history
