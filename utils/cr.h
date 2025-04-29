@@ -6,4 +6,5 @@ typedef struct {
   unsigned long long cr1;
   unsigned long long cr2;
   unsigned long long cr3;
+  unsigned long long cr4;
 } crs;

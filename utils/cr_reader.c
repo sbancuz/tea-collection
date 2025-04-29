@@ -10,7 +10,7 @@
 #include "cr.h"
 
 dev_t dev = 0;
-static struct cdev etx_cdev;
+static struct cdev cr_cdev;
 static struct class *dev_class;
 
 static int cr_open(struct inode *inode, struct file *file) { return 0; }
@@ -27,7 +27,10 @@ static long cr_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
                          "mov %%eax, %1\n\t"
                          "mov %%cr3, %%rax\n\t"
                          "mov %%eax, %2\n\t"
-                         : "=m"(values.cr0), "=m"(values.cr2), "=m"(values.cr3)
+                         "mov %%cr4, %%rax\n\t"
+                         "mov %%eax, %3\n\t"
+                         : "=m"(values.cr0), "=m"(values.cr2), "=m"(values.cr3),
+                           "=m"(values.cr4)
                          : /* no input */
                          : "%rax");
 
@@ -53,42 +56,58 @@ static struct file_operations fops = {
 };
 
 static int __init cr_reader_init(void) {
-  /*Allocating Major number*/
-  if ((alloc_chrdev_region(&dev, 0, 1, "cr_reader")) < 0) {
-    pr_err("Cannot allocate major number for device\n");
-    return -1;
+  int ret;
+
+  // Allocate device numbers
+  ret = alloc_chrdev_region(&dev, 0, 1, "cr_reader");
+  if (ret < 0) {
+    pr_err("Cannot allocate major number\n");
+    return ret;
   }
 
-  cdev_init(&cr_dev, &fops);
-
-  if (cdev_add(&cr_dev, dev, 1) < 0) {
-    goto unreg_class;
+  // Init and add cdev
+  cdev_init(&cr_cdev, &fops);
+  ret = cdev_add(&cr_cdev, dev, 1);
+  if (ret < 0) {
+    pr_err("cdev_add failed\n");
+    goto unregister_dev;
   }
 
-  if (IS_ERR(dev_class = class_create(THIS_MODULE, "cr_class")) {
-    pr_err("Failed to register device class");
-    goto unreg_class;
+  // Create class
+  dev_class = class_create("cr_class");
+  if (IS_ERR(dev_class)) {
+    pr_err("Failed to create class\n");
+    ret = PTR_ERR(dev_class);
+    goto del_cdev;
   }
 
-  if (IS_ERR(device_create(dev_class, NULL, dev, NULL, "etx_device"))) {
-    pr_err("Cannot create the Device\n");
-    goto r_device;
+  // Create device
+  if (IS_ERR(device_create(dev_class, NULL, dev, NULL, "cr_device"))) {
+    pr_err("Failed to create device\n");
+    ret = PTR_ERR(dev_class);
+    goto destroy_class;
   }
 
-  pr_info("Kernel Module Inserted Successfully...\n");
-r_device:
+  pr_info("Kernel Module Inserted Successfully\n");
+  return 0;
+
+destroy_class:
   class_destroy(dev_class);
 
-unreg_class:
+del_cdev:
+  cdev_del(&cr_cdev);
+
+unregister_dev:
   unregister_chrdev_region(dev, 1);
-  return 0;
+  return ret;
 }
 
 static void __exit cr_reader_exit(void) {
   device_destroy(dev_class, dev);
   class_destroy(dev_class);
+  cdev_del(&cr_cdev);
   unregister_chrdev_region(dev, 1);
-  pr_info("Kernel Module Removed Successfully...\n");
+  pr_info("Kernel Module Removed Successfully\n");
 }
 
 module_init(cr_reader_init);

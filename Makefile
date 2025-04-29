@@ -1,15 +1,18 @@
+CC := gcc
 CFLAGS = -O0 -Wall -ggdb -std=c99
+SRC_DIRS := spectre meltdown lvi experiments
 
-all: clean out/spectre_v1 out/spectre_v2
 
-out/spectre_v1: ./spectre/spectre_v1.c
-	$(CC) $(CFLAGS) -o $@ $^
+SRC_FILES := $(wildcard $(addsuffix /*.c, $(SRC_DIRS)))
+TARGETS := $(patsubst %, out/%, $(SRC_FILES))
 
-out/spectre_v2: ./spectre/spectre_v2.c
-	$(CC) $(CFLAGS) -o $@ $^
+all: $(TARGETS)
+
+out/%: % 
+	@mkdir -p $(@D)
+	-$(CC) $(CFLAGS) -o $@ $<
+
+.PHONY: all clean .FORCE
 
 clean:
-	rm -f out/**
-
-out/:
-	mkdir -p out
+	rm -rf out/*

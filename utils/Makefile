@@ -7,6 +7,7 @@ PWD := $(shell pwd)
 
 all:
 	make -C $(KDIR) M=$(PWD) modules
+	cc -o reader reader.c 
 
 clean:
 	make -C $(KDIR) M=$(PWD) clean
