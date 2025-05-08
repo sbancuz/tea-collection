@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 
 #include <setjmp.h>
 #include <signal.h>
@@ -74,6 +75,7 @@ char meltdown_v3(size_t _target_addr) {
 }
 
 int main(int argc, char *argv[]) {
+  pin_cpu0();
   setup_signal_handler();
 
   /// Write probe to RAM and put it in non COW pages

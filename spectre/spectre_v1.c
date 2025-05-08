@@ -1,6 +1,6 @@
 /// Credits to:
 /// https://github.com/crozone/SpectrePoC/blob/master/spectre.c
-
+#define _GNU_SOURCE
 #include <emmintrin.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -64,6 +64,7 @@ size_t spectre_v1(size_t x_to_read) {
 }
 
 int main() {
+  pin_cpu0();
   size_t secret_offset = secret - (char *)victim_buf;
   int len = strlen(secret);
 

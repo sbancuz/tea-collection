@@ -2,6 +2,7 @@
 #define CACHE__
 
 #include <immintrin.h>
+#include <sched.h>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -18,6 +19,18 @@ static inline size_t measure_access_time(char *addr) {
   __asm__ __volatile__("movl (%0), %%eax" ::"r"(addr) : "eax");
   _mm_mfence();
   return __rdtsc() - start;
+}
+
+static void pin_cpu0() {
+  cpu_set_t mask;
+
+  CPU_ZERO(&mask);
+  CPU_SET(0, &mask);
+  int result = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+  if (result == -1) {
+    perror("sched_setaffinity");
+    exit(1);
+  }
 }
 
 static inline void measure_cache(char *probe, size_t *hits) {

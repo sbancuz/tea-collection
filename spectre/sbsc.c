@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <emmintrin.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -100,6 +101,8 @@ size_t sbsc(size_t x_to_read) {
 }
 
 int main(int argc, char *argv[]) {
+  pin_cpu0();
+
   ptrdiff_t secret_offset = secret - (char *)victim_buf;
   int len = strlen(secret);
 

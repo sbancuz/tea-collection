@@ -1,6 +1,6 @@
 /// Credits to:
 /// https://github.com/Anton-Cao/spectrev2-poc/blob/master/spectrev2.c
-
+#define _GNU_SOURCE
 #include <emmintrin.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,6 +98,7 @@ char spectre_v2(char *addr_to_read) {
 }
 
 int main(int argc, char *argv[]) {
+  pin_cpu0();
   target = malloc(sizeof(size_t));
 
   char *addr = secret;

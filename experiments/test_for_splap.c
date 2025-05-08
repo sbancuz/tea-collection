@@ -9,6 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "../cache.h"
+
 #define REPS 1000
 // Compare function for qsort
 int compare(const void *a, const void *b) {
@@ -74,14 +76,7 @@ double measure_unroll(volatile int *arr, int iters) {
 }
 
 int main() {
-  cpu_set_t mask;
-  CPU_ZERO(&mask);
-  CPU_SET(0, &mask);
-  int result = sched_setaffinity(0, sizeof(mask), &mask);
-  if (result == -1) {
-    perror("sched_setaffinity");
-    return 1;
-  }
+  pin_cpu0();
 
   const int ITERS_MAX = 1000;
   const int ITERS_MIN = 10;

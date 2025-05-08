@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <emmintrin.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -47,6 +48,7 @@ size_t lvi(size_t x_to_read) {
 }
 
 int main() {
+  pin_cpu0();
   trusted_ptr = malloc(sizeof(trusted_ptr));
   *trusted_ptr = malloc(sizeof(*trusted_ptr));
   arg_copy = malloc(sizeof(arg_copy));
